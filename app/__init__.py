@@ -23,14 +23,17 @@ mail = Mail()
 def create_app(config_name: str | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object("config.DevelopmentConfig")
-    if config_name == "production":
+    if config_name == "production" or os.environ.get("FLASK_ENV") == "production" or os.environ.get("VERCEL"):
         app.config.from_object("config.ProductionConfig")
     elif config_name == "testing":
         app.config.from_object("config.TestingConfig")
 
     app.config.setdefault("SQLALCHEMY_DATABASE_URI", app.config.get("SQLALCHEMY_DATABASE_URI"))
     app.config.setdefault("UPLOAD_FOLDER", os.path.join(app.root_path, "uploads"))
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    try:
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    except Exception:
+        pass
 
     db.init_app(app)
     migrate.init_app(app, db)
